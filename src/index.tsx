@@ -17,7 +17,7 @@ export const Login = () => {
   });
 
   return (
-     <form>
+     <form onSubmit={formik.handleSubmit}>
        <div>
          <input
             name="email"
