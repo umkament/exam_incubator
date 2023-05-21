@@ -17,8 +17,7 @@ export const Login = () => {
       firstName: '',
     },
     validate: (values) => {
-      const errors: LoginFieldsType = {};
-      return errors
+      if (values.firstName.length < 5) { return  {firstName: 'Must be 5 characters or more'}}
     },
     onSubmit: values => {
       alert(JSON.stringify(values, null, 2));
@@ -31,6 +30,7 @@ export const Login = () => {
          <input placeholder={'Введите имя'} {...formik.getFieldProps('firstName')}/>
        </div>
        <button type="submit" disabled={!(formik.isValid && formik.dirty)}>Отправить</button>
+       {formik.errors.firstName ? <div>{formik.errors.firstName}</div> : null}
      </form>
   );
 }
