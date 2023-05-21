@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import {BrowserRouter, Navigate, Route, Routes} from 'react-router-dom'
 
 
 export const PageNotFound = () => {
@@ -27,6 +27,7 @@ export const App = () => {
   return (
      <Routes>
        <Route path={'profile'} element={<Profile/>}/>
+       {<Route path={'*'} element={<Navigate to='/profile'/>}/>}
        {/* ❗❗❗ XXX ❗❗❗  */}
      </Routes>
   )
