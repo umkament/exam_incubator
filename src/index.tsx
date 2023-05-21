@@ -1,21 +1,22 @@
 import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client';
 import { applyMiddleware, combineReducers, legacy_createStore as createStore } from 'redux'
-import thunk, { ThunkAction, ThunkDispatch } from 'redux-thunk';
 import { Provider, TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
+import thunk, { ThunkAction, ThunkDispatch } from 'redux-thunk'
 import axios from 'axios';
 
+
+
 // Types
+type PostDomainType = PostType & {
+  isDisabled: boolean
+}
+
 type PostType = {
   body: string
   id: string
   title: string
   userId: string
-}
-
-type PayloadType = {
-  title: string
-  body?: string
 }
 
 
@@ -26,30 +27,45 @@ const postsAPI = {
   getPosts() {
     return instance.get<PostType[]>('posts')
   },
-  updatePostTitle(postId: string, post: PayloadType) {
-    return instance.put<PostType>(`posts/${postId}`, post)
+  deletePost(id: string) {
+    return instance.delete<{ message: string }>(`posts/${id}?delay=3`)
   }
 }
 
 
 // Reducer
-const initState = [] as PostType[]
+const initState = {
+  isLoading: false,
+  posts: [] as PostDomainType[]
+}
 
 type InitStateType = typeof initState
 
 const postsReducer = (state: InitStateType = initState, action: ActionsType): InitStateType => {
   switch (action.type) {
     case 'POSTS/GET-POSTS':
-      return action.posts
+      return {
+        ...state, posts: action.posts.map(t => {
+          return {...t, isDisabled: false}
+        })
+      }
 
-    case 'POSTS/UPDATE-POST-TITLE':
-      return state.map((p) => {
-        if (p.id === action.post.id) {
-          return {...p, title: action.post.title}
-        } else {
-          return p
-        }
-      })
+    case 'POSTS/DELETE-POST':
+      return {...state, posts: state.posts.filter(t => t.id !== action.id)}
+
+    case 'POSTS/IS-LOADING':
+      return {...state, isLoading: action.isLoading}
+
+    case 'POSTS/IS-DISABLED':
+      return {
+        ...state, posts: state.posts.map((t) => {
+          if (t.id === action.id) {
+            return {...t, isDisabled: action.isDisabled}
+          } else {
+            return t
+          }
+        })
+      }
 
     default:
       return state
@@ -57,9 +73,16 @@ const postsReducer = (state: InitStateType = initState, action: ActionsType): In
 }
 
 const getPostsAC = (posts: PostType[]) => ({type: 'POSTS/GET-POSTS', posts} as const)
-const updatePostTitleAC = (post: PostType) => ({type: 'POSTS/UPDATE-POST-TITLE', post} as const)
-type ActionsType = ReturnType<typeof getPostsAC> | ReturnType<typeof updatePostTitleAC>
+const deletePostAC = (id: string) => ({type: 'POSTS/DELETE-POST', id} as const)
+const setLoadingAC = (isLoading: boolean) => ({type: 'POSTS/IS-LOADING', isLoading} as const)
+const setIsDisabled = (isDisabled: boolean, id: string) => ({type: 'POSTS/IS-DISABLED', isDisabled, id} as const)
+type ActionsType =
+   | ReturnType<typeof getPostsAC>
+   | ReturnType<typeof deletePostAC>
+   | ReturnType<typeof setLoadingAC>
+   | ReturnType<typeof setIsDisabled>
 
+// Thunk
 const getPostsTC = (): AppThunk => (dispatch) => {
   postsAPI.getPosts()
      .then((res) => {
@@ -67,23 +90,14 @@ const getPostsTC = (): AppThunk => (dispatch) => {
      })
 }
 
-const updatePostTC = (postId: string): AppThunk => (dispatch, getState: any) => {
-  try {
-    console.log(getState())
-debugger
-    const currentPost = getState().find((p: PostType) => p.id === postId)
-
-    if (currentPost) {
-      const payload = {title: 'Это просто заглушка. Backend сам сгенерирует новый title'}
-      postsAPI.updatePostTitle(postId, payload)
-         .then((res) => {
-           dispatch(updatePostTitleAC(res.data))
-         })
-    }
-  } catch (e) {
-    alert('Обновить пост не удалось 😢')
-  }
-
+const deletePostTC = (id: string): AppThunk => (dispatch) => {
+  dispatch(setIsDisabled(true, id))
+  dispatch(setLoadingAC(true))
+  postsAPI.deletePost(id)
+     .then((res) => {
+       dispatch(deletePostAC(id))
+       dispatch(setLoadingAC(false))
+     })
 }
 
 // Store
@@ -98,31 +112,49 @@ type AppThunk<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, A
 const useAppDispatch = () => useDispatch<AppDispatch>()
 const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
 
+
+// Loader
+export const Loader = () => {
+  return (
+     <h1>Loading ...</h1>
+  )
+}
+
 // App
 const App = () => {
   const dispatch = useAppDispatch()
-  const posts = useAppSelector(state => state.posts)
+  const posts = useAppSelector(state => state.posts.posts)
+  const isLoading = useAppSelector(state => state.posts.isLoading)
 
   useEffect(() => {
     dispatch(getPostsTC())
   }, [])
 
-  const updatePostHandler = (postId: string) => {
-    dispatch(updatePostTC(postId))
-  }
+  const deletePostHandler = (id: string) => {
+    dispatch(deletePostTC(id))
+  };
 
   return (
-     <>
-       <h1>📜 Список постов</h1>
-       {
-         posts.map(p => {
-           return <div key={p.id}>
-             <b>title</b>: {p.title}
-             <button onClick={() => updatePostHandler(p.id)}>Обновить пост</button>
-           </div>
-         })
-       }
-     </>
+     <div>
+       <div style={{position: 'absolute', top: '0px'}}>
+         {isLoading && <Loader/>}
+       </div>
+       <div style={{marginTop: '100px'}}>
+         <h1>📜 Список постов</h1>
+         {posts.map(p => {
+           return (
+              <div key={p.id}>
+                <b>title</b>: {p.title}
+                <button style={{marginLeft: '15px'}}
+                        onClick={() => deletePostHandler(p.id)}
+                >
+                  удалить пост
+                </button>
+              </div>
+           )
+         })}
+       </div>
+     </div>
   )
 }
 
@@ -130,8 +162,15 @@ const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 root.render(<Provider store={store}> <App/></Provider>)
 
 // 📜 Описание:
-// Попробуйте обновить пост и вы увидите alert с ошибкой.
-// Debugger / network / console.log вам в помощь
-// Найдите ошибку и вставьте исправленную строку кода в качестве ответа.
+// Перед вами список постов.
+// Откройте network и быстро нажмите на кнопку удалить пост несколько раз подряд.
+// Откройте вкладку Preview и проанализируйте ответ с сервера
+// Первое сообщение будет "Post has been successfully deleted",
+// а следующие "Post with id: 63626ac315d01f80765587ee does not exist"
+// Т.е. бэкенд первый раз удаляет, а потом уже не может, т.к. пост удален из базы данных.
 
-// 🖥 Пример ответа: const payload = {...currentPost, tile: 'Летим 🚀'}
+// Ваша задача при первом клике задизаблить кнопку удаления,
+// соответсвенно не давать пользователю возможности слать повторные запросы
+// Необходимую строку кода для решения этой задачи напишите в качестве ответа.
+
+// 🖥 Пример ответа: style={{marginRight: '20px'}}
