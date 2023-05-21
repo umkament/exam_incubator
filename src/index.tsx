@@ -57,7 +57,7 @@ export const Login = () => {
        </div>
        <div>
          <input
-            name="password"
+            name="phone"
             onChange={formik.handleChange}
             value={formik.values.phone}
             placeholder={'Введите телефон'}
