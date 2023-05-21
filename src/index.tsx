@@ -27,7 +27,7 @@ export const App = () => {
   return (
      <Routes>
        <Route path={'profile'} element={<Profile/>}/>
-       {XXX}
+       {<Route path={'*'} element={<Navigate to='/profile'/>}/>}
      </Routes>
   )
 }
