@@ -1,93 +1,135 @@
-import axios from 'axios'
 import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client';
-import { Provider, TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
-import { applyMiddleware, combineReducers, legacy_createStore as createStore } from 'redux';
+import { applyMiddleware, combineReducers, legacy_createStore as createStore } from 'redux'
 import thunk, { ThunkAction, ThunkDispatch } from 'redux-thunk';
+import { Provider, TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
+import axios from 'axios';
 
 // Types
-type CommentType = {
-  postId: string
-  id: string
-  name: string
-  email: string
+type PostType = {
   body: string
+  id: string
+  title: string
+  userId: string
 }
+
+type PayloadType = {
+  title: string
+  body?: string
+}
+
 
 // Api
 const instance = axios.create({baseURL: 'https://exams-frontend.kimitsu.it-incubator.ru/api/'})
 
-const commentsAPI = {
-  getComments() {
-    return instance.get<CommentType[]>('comments')
+const postsAPI = {
+  getPosts() {
+    return instance.get<PostType[]>('posts')
+  },
+  updatePostTitle(postId: string, post: PayloadType) {
+    return instance.put<PostType>(`posts/${postId}`, post)
   }
 }
 
+
 // Reducer
-const initState = [] as CommentType[]
+const initState = [] as PostType[]
 
 type InitStateType = typeof initState
 
-const commentsReducer = (state: InitStateType = initState, action: ActionsType): InitStateType => {
+const postsReducer = (state: InitStateType = initState, action: ActionsType): InitStateType => {
   switch (action.type) {
-    case 'COMMENTS/GET-COMMENTS':
-      return action.comments
+    case 'POSTS/GET-POSTS':
+      return action.posts
+
+    case 'POSTS/UPDATE-POST-TITLE':
+      return state.map((p) => {
+        if (p.id === action.post.id) {
+          return {...p, title: action.post.title}
+        } else {
+          return p
+        }
+      })
+
     default:
       return state
   }
 }
 
-const getCommentsAC = (comments: CommentType[]) => ({type: 'COMMENTS/GET-COMMENTS', comments} as const)
-type ActionsType = ReturnType<typeof getCommentsAC>
+const getPostsAC = (posts: PostType[]) => ({type: 'POSTS/GET-POSTS', posts} as const)
+const updatePostTitleAC = (post: PostType) => ({type: 'POSTS/UPDATE-POST-TITLE', post} as const)
+type ActionsType = ReturnType<typeof getPostsAC> | ReturnType<typeof updatePostTitleAC>
 
-const getCommentsTC = (): ThunkAction<void, RootState, unknown, ActionsType> => (dispatch) => {
-  commentsAPI.getComments()
+const getPostsTC = (): AppThunk => (dispatch) => {
+  postsAPI.getPosts()
      .then((res) => {
-       dispatch(getCommentsAC(res.data))
+       dispatch(getPostsAC(res.data))
      })
 }
 
+const updatePostTC = (postId: string): AppThunk => (dispatch, getState: any) => {
+  try {
+    const currentPost = getState().find((p: PostType) => p.id === postId)
+
+    if (currentPost) {
+      const payload = {title: 'Это просто заглушка. Backend сам сгенерирует новый title'}
+      postsAPI.updatePostTitle(postId, payload)
+         .then((res) => {
+           dispatch(updatePostTitleAC(res.data))
+         })
+    }
+  } catch (e) {
+    alert('Обновить пост не удалось 😢')
+  }
+
+}
 
 // Store
 const rootReducer = combineReducers({
-  comments: commentsReducer,
+  posts: postsReducer,
 })
 
 const store = createStore(rootReducer, applyMiddleware(thunk))
 type RootState = ReturnType<typeof store.getState>
 type AppDispatch = ThunkDispatch<RootState, unknown, ActionsType>
+type AppThunk<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, ActionsType>
 const useAppDispatch = () => useDispatch<AppDispatch>()
 const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
 
 // App
-export const App = () => {
-
-  const comments = useAppSelector(state => state.comments)
+const App = () => {
   const dispatch = useAppDispatch()
+  const posts = useAppSelector(state => state.posts)
 
   useEffect(() => {
-    dispatch(getCommentsTC())
+    dispatch(getPostsTC())
   }, [])
+
+  const updatePostHandler = (postId: string) => {
+    dispatch(updatePostTC(postId))
+  }
 
   return (
      <>
-       <h1>📝 Список комментариев</h1>
+       <h1>📜 Список постов</h1>
        {
-         comments.map(c => {
-           return <div key={c.id}><b>Comment</b>: {c.body} </div>
+         posts.map(p => {
+           return <div key={p.id}>
+             <b>title</b>: {p.title}
+             <button onClick={() => updatePostHandler(p.id)}>Обновить пост</button>
+           </div>
          })
        }
      </>
   )
 }
 
-
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(<Provider store={store}> <App/></Provider>)
 
 // 📜 Описание:
-// Ваша задача стоит в том чтобы правильно передать нужные типы в дженериковый тип ThunkAction<any, any, any, any>.
-// Что нужно написать вместо any, any, any, any чтобы правильно типизировать thunk creator?
-// Ответ дайте через пробел
+// Попробуйте обновить пост и вы увидите alert с ошибкой.
+// Debugger / network / console.log вам в помощь
+// Найдите ошибку и вставьте исправленную строку кода в качестве ответа.
 
-// 🖥 Пример ответа: unknown status isDone void
+// 🖥 Пример ответа: const payload = {...currentPost, tile: 'Летим 🚀'}
