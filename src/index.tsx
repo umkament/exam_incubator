@@ -89,7 +89,7 @@ const App = () => {
   const todos = useAppSelector(state => state.todos)
 
   useEffect(() => {
-    getTodosTC()
+    dispatch(getTodosTC())
   }, [])
 
   const changeStatusHandler = (id: string, completed: boolean) => {
