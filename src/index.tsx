@@ -43,7 +43,7 @@ export const Login = () => {
        </div>
        <div>
          <input placeholder={'Введите email'}{...formik.getFieldProps('email')}/>
-         {getTrue() && <div style={{color: 'red'}}>ERROR</div>}
+         {formik.errors.email ? <div style={{color: 'red'}}>{formik.errors.email}</div> : null}
        </div>
        <button type="submit">Отправить</button>
      </form>
