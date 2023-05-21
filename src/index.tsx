@@ -88,7 +88,7 @@ const getTodosTC = (): AppThunk => (dispatch) => {
   dispatch(setLoadingAC(true))
   api.getTodos()
      .then((res) => {
-       // XXX
+       baseSuccessHandler(dispatch, getTodosAC, res.data)
      })
      .catch((e: AxiosError) => {
        dispatch(setError(e.message))
@@ -100,7 +100,7 @@ const getUsersTC = (): AppThunk => (dispatch) => {
   dispatch(setLoadingAC(true))
   api.getUsers()
      .then((res) => {
-       // YYY
+       baseSuccessHandler(dispatch, getUsersAC, res.data.items)
      })
      .catch((e: AxiosError) => {
        dispatch(setError(e.message))
