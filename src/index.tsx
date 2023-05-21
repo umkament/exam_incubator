@@ -22,7 +22,7 @@ const commentsAPI = {
     const payload = {body: 'Это просто заглушка. Backend сам сгенерирует новый комментарий и вернет его вам'}
     // Promise.resolve() стоит в качестве заглушки, чтобы TS не ругался и код компилировался
     // Promise.resolve() нужно удалить и написать правильный запрос для создания нового комментария
-
+    return instance.post('comments', payload)
   }
 }
 
