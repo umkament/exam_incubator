@@ -3,13 +3,17 @@ import React from 'react'
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
+
 // Main
 export const Login = () => {
 
   const formik = useFormik({
     initialValues: {
+      firstName: '',
+      lastName: '',
       email: '',
       password: '',
+      phone: '',
     },
     onSubmit: values => {
       alert(JSON.stringify(values, null, 2));
@@ -20,10 +24,25 @@ export const Login = () => {
      <form onSubmit={formik.handleSubmit}>
        <div>
          <input
+            name="firstName"
+            onChange={formik.handleChange}
+            value={formik.values.firstName}
+            placeholder={'Введите имя'}
+         />
+       </div>
+       <div>
+         <input
+            name="lastName"
+            onChange={formik.handleChange}
+            value={formik.values.lastName}
+            placeholder={'Введите фамилию'}
+         />
+       </div>
+       <div>
+         <input
             name="email"
             onChange={formik.handleChange}
             value={formik.values.email}
-            type="text"
             placeholder={'Введите email'}
          />
        </div>
@@ -32,8 +51,16 @@ export const Login = () => {
             name="password"
             onChange={formik.handleChange}
             value={formik.values.password}
-            type="password"
             placeholder={'Введите пароль'}
+            type={'password'}
+         />
+       </div>
+       <div>
+         <input
+            name="password"
+            onChange={formik.handleChange}
+            value={formik.values.phone}
+            placeholder={'Введите телефон'}
          />
        </div>
        <button type="submit">Отправить</button>
@@ -54,9 +81,8 @@ const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 root.render(<BrowserRouter><App/></BrowserRouter>)
 
 // 📜 Описание:
-// При заполнении данных формы и их отправке вы должны увидеть alert c
-// введенными значениями, но из-за допущенной ошибки форма работает не корректно.
-// Найдите ошибку и исправленную версию строки напишите в качестве ответа.
-// ❗После того как показался alert форма не должна перегружать все приложение
+// Форма заполнения данных работает некорректно.
+// Пользователи жалуются на поле ввода "Телефона"
+// Найдите в коде ошибку. Исправленную версию строки напишите в качестве ответа.
 
-// 🖥 Пример ответа: alert(JSON.stringify(values))
+// 🖥 Пример ответа: <form onSubmit={formik.handleSubmit}>
