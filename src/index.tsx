@@ -6,7 +6,8 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
 // Types
 type LoginFieldsType = {
-  firstName?: string
+  firstName: string
+  email: string
 }
 
 // Main
@@ -15,22 +16,36 @@ export const Login = () => {
   const formik = useFormik({
     initialValues: {
       firstName: '',
+      email: '',
     },
     validate: (values) => {
-      if (values.firstName.length < 5) { return  {firstName: 'Must be 5 characters or more'}}
+      const errors: Partial<LoginFieldsType> = {};
+
+      if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,4}$/i.test(values.email)) {
+        errors.email = 'Invalid email address';
+      }
+      return errors
     },
     onSubmit: values => {
       alert(JSON.stringify(values, null, 2));
     }
   });
 
+  // Функция необходима для того, чтобы вебшторм не ругался на true в JSX
+  const getTrue = () => {
+    return true
+  }
+
   return (
      <form onSubmit={formik.handleSubmit}>
        <div>
          <input placeholder={'Введите имя'} {...formik.getFieldProps('firstName')}/>
        </div>
-       <button type="submit" disabled={!(formik.isValid && formik.dirty)}>Отправить</button>
-       {formik.errors.firstName ? <div>{formik.errors.firstName}</div> : null}
+       <div>
+         <input placeholder={'Введите email'}{...formik.getFieldProps('email')}/>
+         {getTrue() && <div style={{color: 'red'}}>ERROR</div>}
+       </div>
+       <button type="submit">Отправить</button>
      </form>
   );
 }
@@ -48,12 +63,11 @@ const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 root.render(<BrowserRouter><App/></BrowserRouter>)
 
 // 📜 Описание:
-// Начните вводить в поле firstName символы. После ввода первого символа кнопка "Отправить" раздизаблится.
-// Задача: кнопка "Отправить" должна раздизаблиться только в том случае, если длинна имени больше, либо равна 5 символам.
-// Т.е. вам необходимо самостоятельно написать эту валидацию для поля firstName.
-// ❗ В качестве текста ошибки напишите 'Must be 5 characters or more'
-// ❗ Текст ошибки выводить не нужно (только если для себя поиграться).
+// Загрузив приложение вы увидите ошибку под полем email, но вы еще ничего не ввели.
+// Исправьте 46 строку кода так, чтобы:
+// 1) Сообщение об ошибке показывалось только в том случае, когда email введен некорректно.
+// 2) Вместо ERROR должен быть конкретный текст ошибки прописанный в валидации к этому полю.
+// 3) Сообщение должно показываться только в том случае, когда мы взаимодействовали с полем.
+// Исправленную версию строки напишите в качестве ответа.
 
-// В качестве ответа напишите полностью строку кода с условием.
-// 🖥 Пример ответа: return errors.firstName = 'Must be 5 characters or more'
-// ❗ Сторонние библиотеки (например yup) использовать запрещено
+// 🖥 Пример ответа: {true && <div style={{color: 'red'}}>error.email</div>}
