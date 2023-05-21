@@ -1,130 +1,93 @@
+import axios from 'axios'
 import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client';
-import { applyMiddleware, combineReducers, legacy_createStore as createStore } from 'redux'
-import { Provider, TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
-import thunk, { ThunkAction, ThunkDispatch } from 'redux-thunk'
-import axios from 'axios';
+import { Provider, TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
+import { applyMiddleware, combineReducers, legacy_createStore as createStore } from 'redux';
+import thunk, { ThunkAction, ThunkDispatch } from 'redux-thunk';
 
 // Types
-type TodoType = {
-  id: string;
-  title: string;
-  order: number;
-  createdAt: string;
-  updatedAt: string;
-  completed: boolean;
+type CommentType = {
+  postId: string
+  id: string
+  name: string
+  email: string
+  body: string
 }
 
 // Api
 const instance = axios.create({baseURL: 'https://exams-frontend.kimitsu.it-incubator.ru/api/'})
 
-const todosAPI = {
-  getTodos() {
-    return instance.get<TodoType[]>('todos')
-  },
-  changeTodoStatus(id: string, completed: boolean) {
-    return instance.put(`todos/${id}`, {completed})
+const commentsAPI = {
+  getComments() {
+    return instance.get<CommentType[]>('comments')
   }
 }
 
-
 // Reducer
-const initState = [] as TodoType[]
+const initState = [] as CommentType[]
 
 type InitStateType = typeof initState
 
-const todosReducer = (state: InitStateType = initState, action: ActionsType) => {
+const commentsReducer = (state: InitStateType = initState, action: ActionsType): InitStateType => {
   switch (action.type) {
-    case 'TODOS/GET-TODOS':
-      return action.todos
-
-    case 'TODOS/CHANGE-TODO-STATUS':
-      return state.map((t) => {
-        if (t.id === action.todo.id) {
-          return {...t, completed: action.todo.completed}
-        } else {
-          return t
-        }
-      })
-
+    case 'COMMENTS/GET-COMMENTS':
+      return action.comments
     default:
       return state
   }
 }
 
-const getTodosAC = (todos: TodoType[]) => ({type: 'TODOS/GET-TODOS', todos} as const)
-const changeTodoStatusAC = (todo: TodoType) => ({type: 'TODOS/CHANGE-TODO-STATUS', todo} as const)
-type ActionsType = ReturnType<typeof getTodosAC> | ReturnType<typeof changeTodoStatusAC>
+const getCommentsAC = (comments: CommentType[]) => ({type: 'COMMENTS/GET-COMMENTS', comments} as const)
+type ActionsType = ReturnType<typeof getCommentsAC>
 
-// Thunk
-const getTodosTC = (): AppThunk => (dispatch) => {
-  todosAPI.getTodos()
+const getCommentsTC = (): ThunkAction<any, any, any, any> => (dispatch) => {
+  commentsAPI.getComments()
      .then((res) => {
-       dispatch(getTodosAC(res.data))
+       dispatch(getCommentsAC(res.data))
      })
 }
 
-const changeTodoStatusTC = (id: string, completed: boolean): AppThunk => (dispatch) => {
-  todosAPI.changeTodoStatus(id, completed)
-     .then((res) => {
-       dispatch(changeTodoStatusAC(res.data))
-     })
-}
 
 // Store
 const rootReducer = combineReducers({
-  todos: todosReducer,
+  comments: commentsReducer,
 })
 
 const store = createStore(rootReducer, applyMiddleware(thunk))
 type RootState = ReturnType<typeof store.getState>
 type AppDispatch = ThunkDispatch<RootState, unknown, ActionsType>
-type AppThunk<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, ActionsType>
 const useAppDispatch = () => useDispatch<AppDispatch>()
 const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
 
 // App
-const App = () => {
+export const App = () => {
+
+  const comments = useAppSelector(state => state.comments)
   const dispatch = useAppDispatch()
-  const todos = useAppSelector(state => state.todos)
 
   useEffect(() => {
-    dispatch(getTodosTC())
+    dispatch(getCommentsTC())
   }, [])
-
-  const changeStatusHandler = (id: string, completed: boolean) => {
-    dispatch(changeTodoStatusTC(id, completed))
-  };
 
   return (
      <>
-       <h2>✅ Список тудулистов</h2>
+       <h1>📝 Список комментариев</h1>
        {
-         todos.length ?
-            todos.map((t) => {
-              return (
-                 <div style={t.completed ? {color: 'grey'} : {}} key={t.id}>
-                   <input type="checkbox"
-                          checked={t.completed}
-                          onChange={() => changeStatusHandler(t.id, !t.completed)}
-                   />
-                   <b>Описание</b>: {t.title}
-                 </div>
-              )
-            })
-            : <h2>Тудулистов нету 😥</h2>
+         comments.map(c => {
+           return <div key={c.id}><b>Comment</b>: {c.body} </div>
+         })
        }
      </>
   )
 }
 
+
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(<Provider store={store}> <App/></Provider>)
 
 // 📜 Описание:
-// При загрузке приложения вы должны увидеть список тудулистов,
-// но из-за невнимательности была допущена ошибка.
-// Найдите и исправьте ошибку.
-// Исправленную версию строки напишите в качестве ответа.
+// Ваша задача стоит в том чтобы правильно передать нужные типы в дженериковый тип ThunkAction<any, any, any, any>.
+// Что нужно написать вместо any, any, any, any чтобы правильно типизировать thunk creator?
+// Ответ дайте через пробел
 
-// 🖥 Пример ответа: type InitStateType = typeof initState
+// 🖥 Пример ответа: unknown status isDone void
