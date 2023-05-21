@@ -1,45 +1,62 @@
+import { useFormik } from 'formik';
 import React from 'react'
 import ReactDOM from 'react-dom/client';
-import {BrowserRouter, Navigate, Route, Routes} from 'react-router-dom'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 
+// Main
+export const Login = () => {
 
-export const PageNotFound = () => {
-  return <h2>⛔ 404. Page not found ⛔</h2>
-}
+  const formik = useFormik({
+    initialValues: {
+      email: '',
+      password: '',
+    },
+    onSubmit: values => {
+      alert(JSON.stringify(values, null, 2));
+    },
+  });
 
-export const Profile = () => {
-  return <h2>😎 Профиль</h2>
-}
-
-
-export const Main = () => {
   return (
-     <>
-       <h2>✅ Список тудулистов</h2>
-       <h2>📜 Список постов</h2>
-     </>
-  )
+     <form>
+       <div>
+         <input
+            name="email"
+            onChange={formik.handleChange}
+            value={formik.values.email}
+            type="text"
+            placeholder={'Введите email'}
+         />
+       </div>
+       <div>
+         <input
+            name="password"
+            onChange={formik.handleChange}
+            value={formik.values.password}
+            type="password"
+            placeholder={'Введите пароль'}
+         />
+       </div>
+       <button type="submit">Отправить</button>
+     </form>
+  );
 }
 
 // App
 export const App = () => {
-
   return (
      <Routes>
-       <Route path={'profile'} element={<Profile/>}/>
-       {<Route path={'*'} element={<Navigate to='/profile'/>}/>}
-       {/* ❗❗❗ XXX ❗❗❗  */}
+       <Route path={''} element={<Login/>}/>
      </Routes>
   )
 }
-
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(<BrowserRouter><App/></BrowserRouter>)
 
 // 📜 Описание:
-// Вместо ХХХ напишите роут таким образом, чтобы вне зависимости от того чтобы будет в урле (login или home или...)
-// вас всегда редиректило на страницу профиля и при в это в урле по итогу
-// был адрес /profile
+// При заполнении данных формы и их отправке вы должны увидеть alert c
+// введенными значениями, но из-за допущенной ошибки форма работает не корректно.
+// Найдите ошибку и исправленную версию строки напишите в качестве ответа.
+// ❗После того как показался alert форма не должна перегружать все приложение
 
-// 🖥 Пример ответа: <Route path={'/'} element={'to profile page'}/>
+// 🖥 Пример ответа: alert(JSON.stringify(values))
