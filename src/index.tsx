@@ -69,6 +69,8 @@ const getPostsTC = (): AppThunk => (dispatch) => {
 
 const updatePostTC = (postId: string): AppThunk => (dispatch, getState: any) => {
   try {
+    console.log(getState())
+debugger
     const currentPost = getState().find((p: PostType) => p.id === postId)
 
     if (currentPost) {
