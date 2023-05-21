@@ -1,5 +1,5 @@
 import { useFormik } from 'formik';
-import React from 'react'
+import React, {useEffect} from 'react'
 import { Provider, TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Route, Routes, useNavigate } from 'react-router-dom'
@@ -117,6 +117,8 @@ export const Login = () => {
       dispatch(loginTC(values))
     }
   });
+
+  useEffect(()=>{if (isLoggedIn) { return navigate('/profile')}}, [])
 
   return (
      <div>
