@@ -40,7 +40,7 @@ const commentsReducer = (state: InitStateType = initState, action: ActionsType):
 const getCommentsAC = (comments: CommentType[]) => ({type: 'COMMENTS/GET-COMMENTS', comments} as const)
 type ActionsType = ReturnType<typeof getCommentsAC>
 
-const getCommentsTC = (): ThunkAction<any, any, any, any> => (dispatch) => {
+const getCommentsTC = (): ThunkAction<void, RootState, unknown, ActionsType> => (dispatch) => {
   commentsAPI.getComments()
      .then((res) => {
        dispatch(getCommentsAC(res.data))
