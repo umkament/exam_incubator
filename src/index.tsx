@@ -1,6 +1,16 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+
+
+export const PageNotFound = () => {
+  return <h2>⛔ 404. Page not found ⛔</h2>
+}
+
+export const Profile = () => {
+  return <h2>😎 Профиль</h2>
+}
+
 
 export const Main = () => {
   return (
@@ -16,7 +26,8 @@ export const App = () => {
 
   return (
      <Routes>
-       <Route path={'/'} element={<Main/>}/>
+       <Route path={'profile'} element={<Profile/>}/>
+       {/* ❗❗❗ XXX ❗❗❗  */}
      </Routes>
   )
 }
@@ -26,8 +37,8 @@ const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 root.render(<BrowserRouter><App/></BrowserRouter>)
 
 // 📜 Описание:
-// Приложение при старте падает с ошибкой...
-// Найдите и исправьте ошибку, чтобы на экране отобразилось 2 заголовка.
-// Исправленную версию строки напишите в качестве ответа.
+// Вместо ХХХ напишите роут таким образом, чтобы вне зависимости от того чтобы будет в урле (login или home или...)
+// вас всегда редиректило на страницу профиля и при в это в урле по итогу
+// был адрес /profile
 
-// 🖥 Пример ответа: type InitStateType = typeof initState
+// 🖥 Пример ответа: <Route path={'/'} element={'to profile page'}/>
