@@ -1,113 +1,130 @@
+import React, { ChangeEvent, useState } from 'react'
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Route, Routes, useNavigate, useParams } from 'react-router-dom'
-import React from 'react'
+import { BrowserRouter, Route, Routes, useNavigate } from 'react-router-dom'
+import thunk, { ThunkAction, ThunkDispatch } from 'redux-thunk'
+import { Provider, TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
+import axios from 'axios'
+import { applyMiddleware, combineReducers, legacy_createStore as createStore } from 'redux'
 
-type UserType = {
-  id: number
-  name: string
-  avatar: string
-  age: number
-  address: string
+
+// Types
+type LoginFieldsType = {
+  email: string
+  password: string
 }
 
-const users: UserType[] = [
-  {
-    id: 1,
-    name: 'my Name',
-    age: 32,
-    avatar: '—ฅ/ᐠ.̫ .ᐟ\\ฅ—',
-    address: 'my Address'
-  },
-  {
-    id: 2,
-    name: 'John',
-    age: 22,
-    avatar: ':)',
-    address: 'California'
-  },
-  {
-    id: 3,
-    name: 'Mike',
-    age: 18,
-    avatar: '^._.^',
-    address: 'New York'
-  },
-  {
-    id: 4,
-    name: 'Emma',
-    age: 38,
-    avatar: '/ᐠ-ꞈ-ᐟ\\',
-    address: 'Washington'
-  },
-]
+// API
+const instance = axios.create({baseURL: 'https://exams-frontend.kimitsu.it-incubator.ru/api/'})
 
-const StartPage = () => {
+const api = {
+  login(data: LoginFieldsType) {
+    return instance.post('auth/login', data)
+  },
+}
+
+// Reducer
+const initState = {isAuth: false}
+type InitStateType = typeof initState
+
+const appReducer = (state: InitStateType = initState, action: ActionsType): InitStateType => {
+  switch (action.type) {
+    case 'SET_AUTH':
+      return {...state, isAuth: action.isAuth}
+    default:
+      return state
+  }
+}
+
+// Store
+const rootReducer = combineReducers({app: appReducer})
+
+const store = createStore(rootReducer, applyMiddleware(thunk))
+type RootState = ReturnType<typeof store.getState>
+type AppDispatch = ThunkDispatch<RootState, unknown, ActionsType>
+type AppThunk<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, ActionsType>
+const useAppDispatch = () => useDispatch<AppDispatch>()
+const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
+
+const setAuth = (isAuth: boolean) => ({type: 'SET_AUTH', isAuth} as const)
+type ActionsType = ReturnType<typeof setAuth>
+
+
+// Thunk
+const loginTC = (email: string, password: string): AppThunk => async (dispatch) => {
+  try {
+    await api.login({email, password})
+    dispatch(setAuth(true))
+  } catch (e: any) {
+    alert(`❌ ${e.response.data.errors} ❌`)
+  }
+}
+
+// Components
+const Login = () => {
+  const isAuth = useAppSelector(state => state.app.isAuth)
+
+  const dispatch = useAppDispatch()
+
   const navigate = useNavigate()
-  const friends = users.filter(u => u.id !== 1)
 
-  const mappedFriends = friends.map((f, i) => {
-    const go = () => {
-      navigate('/friend/' + f.id)
-    }
+  const [email, setEmail] = useState('darrell@gmail.com')
+  const [password, setPassword] = useState('123')
 
-    return (
-       <div key={i} onClick={go} style={{paddingLeft: 24, color: 'blue', cursor: 'pointer'}}>
-         {f.name}, {f.age}
-       </div>
-    )
-  })
+  const changeEmailHandler = (e: ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value)
+  }
 
-  return (
-     <div>
-       <h2>🙂 My profile</h2>
-       <Profile userId={1}/>
-       <hr/>
-       <h2>👪 Friends</h2>
-       {mappedFriends}
-     </div>
-  )
-}
-const Profile: React.FC<{ userId?: number }> = ({userId}) => {
-  const {id} = useParams<{ id: string }>()
-  const user = users.find(u => u.id === +(id || userId || 0))
+  const changePasswordHandler = (e: ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value)
+  }
+
+  if (isAuth) {
+    navigate('/profile')
+  }
 
   return (
      <div>
-       <div>
-         <b>avatar</b> {user?.avatar}
-       </div>
-       <div>
-         <div><b>name</b>: {user?.name}</div>
-         <div><b>age</b>: {user?.age}</div>
-         <div><b>address</b>: {user?.address}</div>
-       </div>
+       <input
+          type={'text'}
+          value={email}
+          onChange={changeEmailHandler}
+       />
+       <input
+          type={'password'}
+          value={password}
+          onChange={changePasswordHandler}
+       />
+       <button
+          disabled={!email || !password}
+       >
+         login
+       </button>
      </div>
   )
 }
 
-export const Friends = () => {
+export const App = () => {
   return (
      <Routes>
-       <Route path={'/'} element={<StartPage/>}/>
-       <Route path={'friend'} element={<Profile/>}/>
-       <Route path={'*'} element={<div>❌404 Page Not Found❌</div>}/>
+       <Route path={'/'} element={<Login/>}/>
+       <Route path={'/profile'} element={<h2>😎 Profile</h2>}/>
      </Routes>
   )
 }
 
+
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
    <BrowserRouter>
-     <Friends/>
+     <Provider store={store}>
+       <App/>
+     </Provider>
    </BrowserRouter>
 );
 
 // 📜 Описание:
-// При загрузке приложения на экране отображается
-// профиль пользователя и список друзей.
-// Если кликнуть на пользователя, то видим ❌404 Page Not Found❌
-// Исправьте код, чтобы по клику на пользователя
-// отображалась странице с информацией о друге.
-// В качестве ответа укажите исправленную строку кода.
-//
-// 🖥 Пример ответа: <Profile userId={4}/>
+// ❗ Email и password менять не надо. Это тестовые данные с которыми будет происходить успешный запрос.
+// Помогите разработчику исправить код так, чтобы успешно залогиниться (и редиректнуться на Profile)
+// В качестве ответа укажите код, который необходимо добавить, чтобы реализовать данную задачу.
+
+// 🖥 Пример ответа: navigate('/profile')
