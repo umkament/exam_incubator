@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Route, Routes, useNavigate } from 'react-router-dom'
+import axios from "axios";
 
 const Login = () => {
   const navigate = useNavigate()
@@ -14,7 +15,7 @@ const Login = () => {
   )
 }
 const SecretToken = () => {
-  const token = 'no token' // FIX
+  const token = localStorage.getItem('token') // FIX
 
   return (
      <h1>🦾 token: {token}</h1>
