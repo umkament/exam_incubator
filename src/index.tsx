@@ -1,21 +1,44 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client';
+import { BrowserRouter, Route, Routes, useNavigate } from 'react-router-dom'
 
-export const App = () => {
+const Login = () => {
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    navigate('/secret/JIUzI1NiIsInR5cCI6IkpXVCJ9')
+  }, [])
+
   return (
-     <div>
-       <h2>Что нужно прописать в консоли, чтобы создать новую ветку с названием login и перейти на нее ?</h2>
-     </div>
+     <div>Login</div>
+  )
+}
+const SecretToken = () => {
+  const token = 'no token' // FIX
+
+  return (
+     <h1>🦾 token: {token}</h1>
   )
 }
 
+export const App = () => {
+  return (
+     <Routes>
+       <Route path={'/'} element={<Login/>}/>
+       <Route path={'/secret/:token'} element={<SecretToken/>}/>
+     </Routes>
+  )
+}
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
-root.render(<App/>);
+root.render(
+   <BrowserRouter>
+     <App/>
+   </BrowserRouter>
+);
 
-// 📜 Описание:
-// Что нужно прописать в консоли, чтобы создать новую ветку с названием login и перейти на нее ?
+// 📜Описание:
+// Исправьте код на 17 строке так, чтобы на странице отобразился токен.
 
-// 🖥 Пример ответа: git create login
-
-//ответила git checkout -b ＜login＞ ответ неверный
+//❗Ответ можно указывать с типизацией и без. Учтено несколько вариантов
+// 🖥 Пример ответа: const token = '123'
