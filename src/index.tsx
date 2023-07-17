@@ -89,7 +89,7 @@ const Profile = () => {
   const isLoggedIn = useAppSelector(state => state.app.isLoggedIn)
 
   if (!isLoggedIn) {
-    return <Navigate to={'/login'}/>
+    return <Loader/>
   }
 
   return <h2>😎 Profile </h2>
