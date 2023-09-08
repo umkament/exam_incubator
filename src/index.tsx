@@ -1,28 +1,56 @@
 import ReactDOM from 'react-dom/client';
 import React, { useEffect, useState } from 'react'
+import { BrowserRouter, Route, Routes, useNavigate, useParams } from 'react-router-dom'
 
-export const Mining = () => {
-  const [btc, setBtc] = useState(0)
+const newSum = 1000
+
+const Login = () => {
+  const navigate = useNavigate()
 
   useEffect(() => {
-    setInterval(() => {
-      // ❗❗❗ XXX ❗❗❗
-    }, 1000)
+    navigate(`/balance/${newSum}`)
   }, [])
 
   return (
-     <h1>🪙 BTC: {btc}</h1>
+     <h1>Login</h1>
+  )
+}
+
+const Balance = () => {
+  const [balance, setBalance] = useState(500)
+
+  const params = useParams()
+
+  useEffect( ()=> {
+    if (params.bonus) {
+      setBalance(prevBalance => prevBalance + newSum)
+    }
+  },[] )
+
+  return (
+     <h1>💵 balance: {balance}</h1>
+  )
+}
+
+export const Bank = () => {
+  return (
+     <Routes>
+       <Route path={'/'} element={<Login/>}/>
+       <Route path={'/balance/:bonus'} element={<Balance/>}/>
+     </Routes>
   )
 }
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
-root.render(<Mining/>);
+root.render(
+   <BrowserRouter>
+     <Bank/>
+   </BrowserRouter>
+);
 
 // 📜 Описание:
-// Помогите разработчику намайнить биткоинов.
-// Что-то не майнятся 😥.
-// Что необходимо написать вместо XXX чтобы биткоины майнились (каждую секунду прибавлялся 1 биткоин) ?
-// ❗В качестве переменной используйте значение prevState
+// Перед вами баланс равный 500.
+// Ваша задача вместо XXX написать код,
+// в результате которого баланс увеличится на сумму указанную в роуте.
 
-// 🖥 Пример ответа: btc = 1000000
-// ответ setBtc(prevState => prevState + 1) - засчитан
+// 🖥 Пример ответа: balance = newSum
