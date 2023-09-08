@@ -1,37 +1,35 @@
-import React, { useEffect } from 'react'
+import React, {ChangeEvent, useEffect, useState} from 'react'
 import ReactDOM from 'react-dom/client';
-import { applyMiddleware, combineReducers, legacy_createStore as createStore } from 'redux'
+import { BrowserRouter, Route, Routes, useNavigate } from 'react-router-dom'
 import thunk, { ThunkAction, ThunkDispatch } from 'redux-thunk'
 import { Provider, TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
-import { BrowserRouter, Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { applyMiddleware, combineReducers, legacy_createStore as createStore } from 'redux'
+
+
+// Types
+type LoginFieldsType = {
+  email: string
+  password: string
+}
 
 // API
 const instance = axios.create({baseURL: 'https://exams-frontend.kimitsu.it-incubator.ru/api/'})
 
 const api = {
-  me() {
-    return instance.get('auth/me?delay=3')
+  login(data: LoginFieldsType) {
+    return instance.post('auth/login', data)
   },
 }
 
-
 // Reducer
-const initState = {
-  isInitialized: false,
-  isLoading: false,
-  isLoggedIn: false
-}
+const initState = {isAuth: false}
 type InitStateType = typeof initState
 
 const appReducer = (state: InitStateType = initState, action: ActionsType): InitStateType => {
   switch (action.type) {
-    case 'SET_IS_INITIALIZED':
-      return {...state, isInitialized: action.isInitialized}
-    case 'SET_LOADING':
-      return {...state, isLoading: action.isLoading}
-    case 'SET_IS_LOGGED_IN':
-      return {...state, isLoggedIn: action.isLoggedIn}
+    case 'SET_AUTH':
+      return {...state, isAuth: action.isAuth}
     default:
       return state
   }
@@ -47,76 +45,79 @@ type AppThunk<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, A
 const useAppDispatch = () => useDispatch<AppDispatch>()
 const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
 
-const setIsInitialized = (isInitialized: boolean) => ({type: 'SET_IS_INITIALIZED', isInitialized} as const)
-const setLoading = (isLoading: boolean) => ({type: 'SET_LOADING', isLoading} as const)
-const setIsLoggedIn = (isLoggedIn: boolean) => ({type: 'SET_IS_LOGGED_IN', isLoggedIn} as const)
-type ActionsType =
-   | ReturnType<typeof setLoading>
-   | ReturnType<typeof setIsInitialized>
-   | ReturnType<typeof setIsLoggedIn>
+const setAuth = (isAuth: boolean) => ({type: 'SET_AUTH', isAuth} as const)
+type ActionsType = ReturnType<typeof setAuth>
+
 
 // Thunk
-const me = (): AppThunk => async (dispatch) => {
-  dispatch(setLoading(true))
-  api.me()
-     .then((res) => {
-       dispatch(setIsLoggedIn(true))
-     })
-     .finally(() => {
-       dispatch(setLoading(false))
-       dispatch(setIsInitialized(true))
-     })
-
+const loginTC = (email: string, password: string): AppThunk => async (dispatch) => {
+  try {
+    await api.login({email, password})
+    dispatch(setAuth(true))
+  } catch (e: any) {
+    alert(`❌ ${e.response.data.errors} ❌`)
+  }
 }
 
 // Components
-const Loader = () => <h2>🔘 Крутилка...</h2>
-
 const Login = () => {
-  const isInitialized = useAppSelector(state => state.app.isInitialized)
-  const isLoading = useAppSelector(state => state.app.isLoading)
-  const isLoggedIn = useAppSelector(state => state.app.isLoggedIn)
-
-  if (isLoggedIn) {
-    return <Navigate to={'/'}/>
-  }
-
-  return <h2>🐣 Login</h2>
-}
-const Profile = () => {
-  const isInitialized = useAppSelector(state => state.app.isInitialized)
-  const isLoading = useAppSelector(state => state.app.isLoading)
-  const isLoggedIn = useAppSelector(state => state.app.isLoggedIn)
-
-  if (!isLoggedIn) {
-    return <Navigate to={'/login'}/>
-  }
-
-  return <h2>😎 Profile </h2>
-}
-
-export const App = () => {
-  const isInitialized = useAppSelector(state => state.app.isInitialized)
-  const isLoading = useAppSelector(state => state.app.isLoading)
-  const isLoggedIn = useAppSelector(state => state.app.isLoggedIn)
+  const isAuth = useAppSelector(state => state.app.isAuth)
 
   const dispatch = useAppDispatch()
 
-  useEffect(() => {
-    dispatch(me())
-  }, [])
+  const navigate = useNavigate()
 
-  if (isLoading || !isInitialized || !isLoggedIn) {
-    return <Loader/>
+  const [email, setEmail] = useState('darrell@gmail.com')
+  const [password, setPassword] = useState('123')
+
+  const changeEmailHandler = (e: ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value)
+  }
+
+  const changePasswordHandler = (e: ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value)
+  }
+
+/*  useEffect(() => {
+  loginTC(email, password)
+  }, [])*/
+
+  loginTC(email, password)
+
+  if (isAuth) {
+    navigate('/profile')
   }
 
   return (
+     <div>
+       <input
+          type={'text'}
+          value={email}
+          onChange={changeEmailHandler}
+       />
+       <input
+          type={'password'}
+          value={password}
+          onChange={changePasswordHandler}
+       />
+       <button
+          disabled={!email || !password}
+       >
+         login
+       </button>
+     </div>
+  )
+}
+
+export const App = () => {
+  return (
      <Routes>
-       <Route path={'/'} element={<Profile/>}/>
-       <Route path={'login'} element={<Login/>}/>
+       <Route path={'/'} element={<Login/>}/>
+       <Route path={'/profile'} element={<h2>😎 Profile</h2>}/>
      </Routes>
   )
 }
+
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
@@ -128,10 +129,9 @@ root.render(
 );
 
 // 📜 Описание:
-// После старта / обновления приложения мы видим Login, а потом через 3 секунды Profile
-// Но это плохое поведение.
-// Ваша задача написать код при котором пользователя не будет редиректить на Login,
-// а во время ожидания ответа с сервера он будет видеть Loader
+// ❗ Email и password менять не надо. Это тестовые данные с которыми будет происходить успешный запрос.
+// Помогите разработчику исправить код так, чтобы успешно залогиниться (и редиректнуться на Profile)
+// В качестве ответа укажите код, который необходимо добавить, чтобы реализовать данную задачу.
 
-// 🖥 Пример ответа: <Loader/>
-//if (isLoading || !isInitialized || !isLoggedIn) {return <Loader/>} - ответ не засчитан
+// 🖥 Пример ответа: navigate('/profile')
+//ответ - loginTC(email, password) - не засчитан, возможно нужно через useEffect
