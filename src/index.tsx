@@ -1,42 +1,31 @@
+import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client';
-import React, { useEffect, useState } from 'react'
-import { BrowserRouter, Route, Routes, useNavigate, useParams } from 'react-router-dom'
-
-const newSum = 1000
+import {BrowserRouter, Route, Routes, useNavigate, useParams} from 'react-router-dom'
 
 const Login = () => {
   const navigate = useNavigate()
 
   useEffect(() => {
-    navigate(`/balance/${newSum}`)
+    navigate('/secret/JIUzI1NiIsInR5cCI6IkpXVCJ9')
   }, [])
 
   return (
-     <h1>Login</h1>
+     <div>Login</div>
   )
 }
-
-const Balance = () => {
-  const [balance, setBalance] = useState(500)
-
-  const params = useParams()
-
-  useEffect( ()=> {
-    if (params.bonus) {
-      setBalance(prevBalance => prevBalance + newSum)
-    }
-  },[] )
+const SecretToken = () => {
+  const {token} = useParams() // FIX
 
   return (
-     <h1>💵 balance: {balance}</h1>
+     <h1> token: {token}</h1>
   )
 }
 
-export const Bank = () => {
+export const App = () => {
   return (
      <Routes>
        <Route path={'/'} element={<Login/>}/>
-       <Route path={'/balance/:bonus'} element={<Balance/>}/>
+       <Route path={'/secret/:token'} element={<SecretToken/>}/>
      </Routes>
   )
 }
@@ -44,13 +33,13 @@ export const Bank = () => {
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
    <BrowserRouter>
-     <Bank/>
+     <App/>
    </BrowserRouter>
 );
 
-// 📜 Описание:
-// Перед вами баланс равный 500.
-// Ваша задача вместо XXX написать код,
-// в результате которого баланс увеличится на сумму указанную в роуте.
+// 📜Описание:
+// Исправьте код на 17 строке так, чтобы на странице отобразился токен.
 
-// 🖥 Пример ответа: balance = newSum
+//❗Ответ можно указывать с типизацией и без. Учтено несколько вариантов
+// 🖥 Пример ответа: const token = '123'
+// const {token} = useParams() ответ засчитан
