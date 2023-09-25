@@ -1,36 +1,82 @@
-import React from 'react'
 import ReactDOM from 'react-dom/client';
+import { applyMiddleware, combineReducers, legacy_createStore as createStore } from 'redux'
+import thunk, { ThunkAction, ThunkDispatch } from 'redux-thunk'
+import { Provider, TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
+import React from 'react';
 
-export const App = () => {
+// Reducer
+const initState = {
+  goodMorning: [
+    {id: 1, name: 'errors'},
+    {id: 2, name: 'bugs'},
+    {id: 3, name: 'fackups'},
+    {id: 4, name: 'laziness'},
+    {id: 5, name: 'work'},
+  ] as { id: number, name: string }[]
+}
+
+type InitStateType = typeof initState
+
+const appReducer = (state: InitStateType = initState, action: ActionsType): InitStateType => {
+  switch (action.type) {
+    case 'DELETE':
+      return {
+        ...state,
+        goodMorning: state.goodMorning
+           .filter(g => g.id !== action.id)
+      }
+    default:
+      return state
+  }
+}
+
+// Store
+const rootReducer = combineReducers({app: appReducer})
+
+const store = createStore(rootReducer, applyMiddleware(thunk))
+type RootState = ReturnType<typeof store.getState>
+type AppDispatch = ThunkDispatch<RootState, unknown, ActionsType>
+type AppThunk<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, ActionsType>
+const useAppDispatch = () => useDispatch<AppDispatch>()
+const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
+
+const deleteSome = (id: any) => ({type: 'DELETE', id} as const)
+type ActionsType = ReturnType<typeof deleteSome>
+
+// Components
+export const Monday = () => {
+  const goodMorning = useAppSelector(state => state.app.goodMorning)
+  const dispatch = useAppDispatch()
+
+  const mapped = goodMorning
+     .map((p: any, i: number) => (
+        <div key={i}>
+          {p.name}
+          <button onClick={() => dispatch(deleteSome(p.id))}> X </button>
+        </div>
+     ))
+
   return (
      <div>
-       <h2>Какое из приведенных ниже определений верно?</h2>
-       <ol>
-         <li>1 - Команда git push используется для выгрузки содержимого локального репозитория в удаленный репозиторий.
-           Она позволяет передать коммиты из локального репозитория в удаленный.
-         </li>
-         <li>2 - Команда git pull используется для извлечения и загрузки содержимого из удаленного репозитория и
-           немедленного обновления локального репозитория этим содержимым.
-         </li>
-         <li>3 - Команда git fetch загружает коммиты, файлы и ссылки из удаленного репозитория в ваш локальный
-           репозиторий. Извлеките данные с помощью команды fetch, если хотите увидеть, над чем работают остальные.
-         </li>
-         <li>4 - Ни одно из вышеперечисленных определений не верно</li>
-       </ol>
+       {mapped}
      </div>
   )
 }
 
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
-root.render(<App/>);
+root.render(
+   <Provider store={store}>
+     <Monday/>
+   </Provider>
+);
 
 // 📜 Описание:
-// Какое из приведенных ниже определений верно?
-// Может быть несколько вариантов ответа (ответ дайте через пробел).
-// ❗ Ответ будет засчитан как верный, только при полном правильном совпадении.
-// Если указали правильно один вариант (1),
-// а нужно было указать два варианта (1 и 2), то ответ в данном случае будет засчитан как неправильный
-
-// 🖥 Пример ответа: 1
-// ответила 1 3 - ответ не засчитан
+// На экране отображен список дел.
+// Попробуйте удалить какой-нибудь элемент - у вас не получится.
+// Найдите ошибку.
+// В качестве ответа укажите исправленную версию строки
+//
+// 🖥 Пример ответа: delete goodMorning
+// ответ <button onClick={() => dispatch(deleteSome(p.id))}> X </button>
+// ответ засчитан
