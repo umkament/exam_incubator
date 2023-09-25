@@ -51,8 +51,7 @@ const setPageAC = (page: number) => ({type: 'SET_PAGE', page} as const)
 const setUsersAC = (users: UserType[]) => ({type: 'SET_USERS', users} as const)
 type ActionsType = ReturnType<typeof setPageAC> | ReturnType<typeof setUsersAC>
 
-const getUsers = (): AppThunk => (dispatch, getState) => {
-  const page = 1
+const getUsers = (page: number): AppThunk => (dispatch, getState) => {
   api.getUsers(page)
      .then(res => dispatch(setUsersAC(res.data.items)))
 }
@@ -65,7 +64,7 @@ export const App = () => {
   const dispatch = useAppDispatch()
 
   useEffect(() => {
-    dispatch(getUsers())
+    dispatch(getUsers(page))
   }, [page])
 
 
@@ -110,3 +109,8 @@ root.render(
 // Задача: найти эту ошибку, и исправленную версию строки написать в качестве ответа.
 
 // 🖥 Пример ответа: {pages.next()}
+
+// ответ записала const getUsers = (page: number): AppThunk => (dispatch, getState) => {
+//   api.getUsers(page)
+// зачитал как неверный
+//хотя код работает
