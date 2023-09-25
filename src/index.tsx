@@ -53,6 +53,7 @@ export const App = () => {
      .map((w: string, i: number) => <div key={i}>{w}</div>)
 
   const onChangeHandler = (value: string) => {
+    dispatch(setFind(value))
     console.log(value)
   }
 
@@ -81,3 +82,4 @@ root.render(
 // В качестве ответа укажите исправленную версию строки.
 //
 // 🖥 Пример ответа: dispatch(setFind(defWords))
+// ответ - dispatch(setFind(value)) - засчитан
