@@ -13,7 +13,9 @@ const instance = axios.create({baseURL: 'https://exams-frontend.kimitsu.it-incub
 
 const api = {
   getUsers() {
-    return instance.get('users?pageSize=3&pageNumber=2')
+    //return instance.get('users?pageSize=3&pageNumber=2')
+    return instance.get('users', { params: { pageSize: 3, pageNumber: 2 } })
+
   },
 }
 
@@ -58,3 +60,5 @@ root.render(<App/>)
 
 
 // 🖥 Пример ответа: return instance.get('users=pageSize=3=pageNumber=2')
+
+// ответ  return instance.get('users', { params: { pageSize: 3, pageNumber: 2 } }) - засчитан
