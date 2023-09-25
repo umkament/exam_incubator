@@ -1,116 +1,31 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import ReactDOM from 'react-dom/client';
-import { applyMiddleware, combineReducers, legacy_createStore as createStore } from 'redux'
-import thunk, { ThunkAction, ThunkDispatch } from 'redux-thunk'
-import { Provider, TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
-import axios from 'axios'
 
-
-type UserType = {
-  id: string;
-  name: string;
-  age: number;
-}
-
-// API
-const instance = axios.create({baseURL: 'https://exams-frontend.kimitsu.it-incubator.ru/api/'})
-
-const api = {
-  getUsers(pageNumber: number) {
-    return instance.get(`users?pageSize=${3}&pageNumber=${pageNumber}`)
-  },
-}
-
-
-// Reducer
-const initState = {page: 1, users: [] as UserType[]}
-type InitStateType = typeof initState
-
-const appReducer = (state: InitStateType = initState, action: ActionsType): InitStateType => {
-  switch (action.type) {
-    case 'SET_PAGE':
-      return {...state, page: action.page}
-    case 'SET_USERS':
-      return {...state, users: action.users}
-    default:
-      return state
-  }
-}
-
-// Store
-const rootReducer = combineReducers({app: appReducer})
-
-const store = createStore(rootReducer, applyMiddleware(thunk))
-type RootState = ReturnType<typeof store.getState>
-type AppDispatch = ThunkDispatch<RootState, unknown, ActionsType>
-type AppThunk<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, ActionsType>
-const useAppDispatch = () => useDispatch<AppDispatch>()
-const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
-
-const setPageAC = (page: number) => ({type: 'SET_PAGE', page} as const)
-const setUsersAC = (users: UserType[]) => ({type: 'SET_USERS', users} as const)
-type ActionsType = ReturnType<typeof setPageAC> | ReturnType<typeof setUsersAC>
-
-const getUsers = (page: number): AppThunk => (dispatch, getState) => {
-  api.getUsers(page)
-     .then(res => dispatch(setUsersAC(res.data.items)))
-}
-
-// Components
 export const App = () => {
-  const page = useAppSelector(state => state.app.page)
-  const users = useAppSelector(state => state.app.users)
-
-  const dispatch = useAppDispatch()
-
-  useEffect(() => {
-    dispatch(getUsers(page))
-  }, [page])
-
-
-  const pages = new Array(4)
-     .fill(1)
-     .map((p, i) => (
-        <button
-           key={i}
-           onClick={() => dispatch(setPageAC(i + 1))}
-           disabled={page === i + 1}
-        >
-          {i + 1}
-        </button>
-     ))
-
   return (
      <div>
-       {
-         users.map(u => {
-           return <div style={{marginBottom: '25px'}} key={u.id}>
-             <p><b>name</b>: {u.name}</p>
-             <p><b>age</b>: {u.age}</p>
-           </div>
-         })
-       }
-       {pages}
+       <h2>Сколько всего веток может быть в репозитории ?</h2>
+       <ul>
+         <li>1 - 2 ветки. master(main) и develop</li>
+         <li>2 - Число веток согласовывается в команде разработчиков и устанавливается в git config</li>
+         <li>3 - Всегда есть ветка master (main), develop может быть по соглашения команды разработчиков. Под каждую фичу
+           создается новая ветка. При этом от ветки с фичей запрещено создавать новые ветки</li>
+         <li>4 - Нет правильного ответа</li>
+       </ul>
      </div>
   )
 }
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
-root.render(
-   <Provider store={store}>
-     <App/>
-   </Provider>
-);
-
+root.render(<App/>);
 
 // 📜 Описание:
-// При переходе по страницам должны подгружаться новые пользователи.
-// Однако в коде допущена ошибка и всегда подгружаются одни и теже пользователи.
-// Задача: найти эту ошибку, и исправленную версию строки написать в качестве ответа.
+// Сколько всего веток может быть в репозитории ?
+// Может быть несколько вариантов ответа (ответ дайте через пробел).
+// ❗ Ответ будет засчитан как верный, только при полном правильном совпадении.
+// Если указали правильно один вариант (1),
+// а нужно было указать два варианта (1 и 2), то ответ в данном случае будет засчитан как неправильный
 
-// 🖥 Пример ответа: {pages.next()}
+// 🖥 Пример ответа: 1
 
-// ответ записала const getUsers = (page: number): AppThunk => (dispatch, getState) => {
-//   api.getUsers(page)
-// зачитал как неверный
-//хотя код работает
+// ответила 3 - ответ не засчитан
