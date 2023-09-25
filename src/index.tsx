@@ -67,6 +67,7 @@ export const Users = () => {
     setTimerId(+setTimeout(() => {
       dispatch(getFriends(name))
     }, 1500))
+    return () => clearTimeout(timerId);
   }, [name])
 
   return (
@@ -105,3 +106,5 @@ root.render(
 // для реализации данной задачи
 //
 // 🖥 Пример ответа: value={name(1500)}
+// ответила return () => clearTimeout(timerId);
+//ответ засчитан
