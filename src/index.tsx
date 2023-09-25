@@ -5,26 +5,6 @@ import { Provider, TypedUseSelectorHook, useDispatch, useSelector } from 'react-
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 
-// Styles
-const table: React.CSSProperties = {
-  borderCollapse: 'collapse',
-  width: '100%',
-  tableLayout: 'fixed',
-}
-
-const th: React.CSSProperties = {
-  padding: '10px',
-  border: '1px solid black',
-  background: 'lightgray',
-  cursor: 'pointer'
-}
-
-const td: React.CSSProperties = {
-  padding: '10px',
-  border: '1px solid black'
-}
-
-// Types
 type UserType = {
   id: string;
   name: string;
@@ -36,21 +16,16 @@ type UsersResponseType = {
   totalCount: number
 }
 
-type ParamsType = {
-  sortBy: string | null
-  sortDirection: 'asc' | 'desc' | null
-}
-
 // API
 const instance = axios.create({baseURL: 'https://exams-frontend.kimitsu.it-incubator.ru/api/'})
 
 const api = {
-  getUsers(params?: ParamsType) {
-    return instance.get<UsersResponseType>('users', {params})
+  getUsers(search: string) {
+    return instance.get<UsersResponseType>(`users?name=${search}&pageSize=100`)
   },
 }
 
-// Reducer
+
 const initState = {users: [] as UserType[]}
 type InitStateType = typeof initState
 
@@ -77,80 +52,36 @@ const setUsersAC = (users: UserType[]) => ({type: 'SET_USERS', users} as const)
 type ActionsType = ReturnType<typeof setUsersAC>
 
 // Thunk
-const getUsersTC = (searchParams?: ParamsType): AppThunk => (dispatch) => {
-  api.getUsers(searchParams)
+const getFriends = (name: string): AppThunk => (dispatch) => {
+  api.getUsers(name)
      .then(res => dispatch(setUsersAC(res.data.items)))
 }
 
 export const Users = () => {
-
-  const [activeColumn, setActiveColumn] = useState<ParamsType>({
-    sortBy: null,
-    sortDirection: 'asc'
-  })
-
   const users = useAppSelector(state => state.app.users)
-
   const dispatch = useAppDispatch()
+  const [name, setName] = useState('')
+  const [timerId, setTimerId] = useState(0)
 
   useEffect(() => {
-    dispatch(activeColumn.sortBy ? getUsersTC(activeColumn) : getUsersTC())
-  }, [activeColumn])
-
-  /*const sortHandler = (sortBy: string) => {
-    // ❗❗❗ XXX ❗❗❗
-    setActiveColumn({
-      sortBy,
-      sortDirection:
-         activeColumn.sortBy === sortBy && activeColumn.sortDirection === 'asc'
-            ? 'desc'
-            : 'asc'
-    });
-  };*/
-
-/*
-  const sortHandler = (sortBy: string) => {
-    setActiveColumn({
-      sortBy,
-      sortDirection: activeColumn.sortDirection === 'asc' ? 'desc' : 'asc'
-    });
-  };
-*/
-  const sortHandler = (sortBy: string) => setActiveColumn({ sortBy, sortDirection: activeColumn.sortDirection === 'asc' ? 'desc' : 'asc' });
-
-
+    setTimerId(+setTimeout(() => {
+      dispatch(getFriends(name))
+    }, 1500))
+  }, [name])
 
   return (
      <div>
-       <h1>👪 Список пользователей</h1>
-       <table style={table}>
-         <thead>
-         <tr>
-           <th style={th} onClick={() => sortHandler('name')}>
-             Name
-             {activeColumn?.sortBy === 'name' && (activeColumn.sortDirection === 'asc' ? <span> &#8593;</span> :
-                <span> &#8595;</span>)}
-           </th>
-           <th style={th} onClick={() => sortHandler('age')}>
-             Age
-             {activeColumn?.sortBy === 'age' && (activeColumn.sortDirection === 'asc' ? <span> &#8593;</span> :
-                <span> &#8595;</span>)}
-           </th>
-         </tr>
-         </thead>
-         <tbody>
-         {
-           users.map(u => {
-             return (
-                <tr key={u.id}>
-                  <td style={td}>{u.name}</td>
-                  <td style={td}>{u.age}</td>
-                </tr>
-             )
-           })
-         }
-         </tbody>
-       </table>
+       <input
+          value={name}
+          onChange={e => setName(e.target.value)}
+       />
+       {
+         users.map(u => {
+           return <div key={u.id}>
+             <p><b>name</b>: {u.name}</p>
+           </div>
+         })
+       }
      </div>
   )
 }
@@ -164,12 +95,13 @@ root.render(
 );
 
 // 📜 Описание:
-// Перед вами таблица с пользователями.
-// Ваша задача вместо XXX написать код для сортировки пользователей по имени и возрасту.
-// Т.е. при нажатии на name либо age пользователи должны сортироваться в таблице.
-// При повторном нажатии на этот же столбец сортировка должна происходить в обратном порядке
-// ❗ сортировка пользователей происходит на сервере, т.е. sort использовать не нужно
-
-// 🖥 Пример ответа: sort(a, b)
-// ответила setActiveColumn({ sortBy, sortDirection: activeColumn.sortDirection === 'asc' ? 'desc' : 'asc' })
-// ответ засчитан
+// На экране input, куда можно вводить символы.
+// Откройте Network/ fetch/XHR и поробуйте вводить символы
+// Обратите внимание, что все символы которые вы вводите уходят на сервер -
+// это плохо.
+//
+// 🪛 Задача: Починить debounce
+// В качестве ответа напишите строку кода которую необходимо исправить или добавить
+// для реализации данной задачи
+//
+// 🖥 Пример ответа: value={name(1500)}
