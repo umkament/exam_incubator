@@ -1,30 +1,37 @@
+import React, { useEffect } from 'react'
 import ReactDOM from 'react-dom/client';
 import { applyMiddleware, combineReducers, legacy_createStore as createStore } from 'redux'
 import thunk, { ThunkAction, ThunkDispatch } from 'redux-thunk'
 import { Provider, TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
-import React from 'react';
+import axios from 'axios'
 
-// Reducer
-const initState = {
-  goodMorning: [
-    {id: 1, name: 'errors'},
-    {id: 2, name: 'bugs'},
-    {id: 3, name: 'fackups'},
-    {id: 4, name: 'laziness'},
-    {id: 5, name: 'work'},
-  ] as { id: number, name: string }[]
+
+type UserType = {
+  id: string;
+  name: string;
+  age: number;
 }
 
+// API
+const instance = axios.create({baseURL: 'https://exams-frontend.kimitsu.it-incubator.ru/api/'})
+
+const api = {
+  getUsers(pageNumber: number) {
+    return instance.get(`users?pageSize=${3}&pageNumber=${pageNumber}`)
+  },
+}
+
+
+// Reducer
+const initState = {page: 1, users: [] as UserType[]}
 type InitStateType = typeof initState
 
 const appReducer = (state: InitStateType = initState, action: ActionsType): InitStateType => {
   switch (action.type) {
-    case 'DELETE':
-      return {
-        ...state,
-        goodMorning: state.goodMorning
-           .filter(g => g.id !== action.id)
-      }
+    case 'SET_PAGE':
+      return {...state, page: action.page}
+    case 'SET_USERS':
+      return {...state, users: action.users}
     default:
       return state
   }
@@ -40,43 +47,66 @@ type AppThunk<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, A
 const useAppDispatch = () => useDispatch<AppDispatch>()
 const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
 
-const deleteSome = (id: any) => ({type: 'DELETE', id} as const)
-type ActionsType = ReturnType<typeof deleteSome>
+const setPageAC = (page: number) => ({type: 'SET_PAGE', page} as const)
+const setUsersAC = (users: UserType[]) => ({type: 'SET_USERS', users} as const)
+type ActionsType = ReturnType<typeof setPageAC> | ReturnType<typeof setUsersAC>
+
+const getUsers = (): AppThunk => (dispatch, getState) => {
+  const page = 1
+  api.getUsers(page)
+     .then(res => dispatch(setUsersAC(res.data.items)))
+}
 
 // Components
-export const Monday = () => {
-  const goodMorning = useAppSelector(state => state.app.goodMorning)
+export const App = () => {
+  const page = useAppSelector(state => state.app.page)
+  const users = useAppSelector(state => state.app.users)
+
   const dispatch = useAppDispatch()
 
-  const mapped = goodMorning
-     .map((p: any, i: number) => (
-        <div key={i}>
-          {p.name}
-          <button onClick={() => dispatch(deleteSome(p.id))}> X </button>
-        </div>
+  useEffect(() => {
+    dispatch(getUsers())
+  }, [page])
+
+
+  const pages = new Array(4)
+     .fill(1)
+     .map((p, i) => (
+        <button
+           key={i}
+           onClick={() => dispatch(setPageAC(i + 1))}
+           disabled={page === i + 1}
+        >
+          {i + 1}
+        </button>
      ))
 
   return (
      <div>
-       {mapped}
+       {
+         users.map(u => {
+           return <div style={{marginBottom: '25px'}} key={u.id}>
+             <p><b>name</b>: {u.name}</p>
+             <p><b>age</b>: {u.age}</p>
+           </div>
+         })
+       }
+       {pages}
      </div>
   )
 }
 
-
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
    <Provider store={store}>
-     <Monday/>
+     <App/>
    </Provider>
 );
 
+
 // 📜 Описание:
-// На экране отображен список дел.
-// Попробуйте удалить какой-нибудь элемент - у вас не получится.
-// Найдите ошибку.
-// В качестве ответа укажите исправленную версию строки
-//
-// 🖥 Пример ответа: delete goodMorning
-// ответ <button onClick={() => dispatch(deleteSome(p.id))}> X </button>
-// ответ засчитан
+// При переходе по страницам должны подгружаться новые пользователи.
+// Однако в коде допущена ошибка и всегда подгружаются одни и теже пользователи.
+// Задача: найти эту ошибку, и исправленную версию строки написать в качестве ответа.
+
+// 🖥 Пример ответа: {pages.next()}
