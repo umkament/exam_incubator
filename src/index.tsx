@@ -1,34 +1,173 @@
-import React from 'react'
 import ReactDOM from 'react-dom/client';
+import { applyMiddleware, combineReducers, legacy_createStore as createStore } from 'redux'
+import thunk, { ThunkAction, ThunkDispatch } from 'redux-thunk'
+import { Provider, TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
+import React, { useEffect, useState } from 'react'
+import axios from 'axios'
 
-export const App = () => {
+// Styles
+const table: React.CSSProperties = {
+  borderCollapse: 'collapse',
+  width: '100%',
+  tableLayout: 'fixed',
+}
+
+const th: React.CSSProperties = {
+  padding: '10px',
+  border: '1px solid black',
+  background: 'lightgray',
+  cursor: 'pointer'
+}
+
+const td: React.CSSProperties = {
+  padding: '10px',
+  border: '1px solid black'
+}
+
+// Types
+type UserType = {
+  id: string;
+  name: string;
+  age: number;
+}
+
+type UsersResponseType = {
+  items: UserType[]
+  totalCount: number
+}
+
+type ParamsType = {
+  sortBy: string | null
+  sortDirection: 'asc' | 'desc' | null
+}
+
+// API
+const instance = axios.create({baseURL: 'https://exams-frontend.kimitsu.it-incubator.ru/api/'})
+
+const api = {
+  getUsers(params?: ParamsType) {
+    return instance.get<UsersResponseType>('users', {params})
+  },
+}
+
+// Reducer
+const initState = {users: [] as UserType[]}
+type InitStateType = typeof initState
+
+const appReducer = (state: InitStateType = initState, action: ActionsType): InitStateType => {
+  switch (action.type) {
+    case 'SET_USERS':
+      return {...state, users: action.users}
+    default:
+      return state
+  }
+}
+
+// Store
+const rootReducer = combineReducers({app: appReducer})
+
+const store = createStore(rootReducer, applyMiddleware(thunk))
+type RootState = ReturnType<typeof store.getState>
+type AppDispatch = ThunkDispatch<RootState, unknown, ActionsType>
+type AppThunk<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, ActionsType>
+const useAppDispatch = () => useDispatch<AppDispatch>()
+const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
+
+const setUsersAC = (users: UserType[]) => ({type: 'SET_USERS', users} as const)
+type ActionsType = ReturnType<typeof setUsersAC>
+
+// Thunk
+const getUsersTC = (searchParams?: ParamsType): AppThunk => (dispatch) => {
+  api.getUsers(searchParams)
+     .then(res => dispatch(setUsersAC(res.data.items)))
+}
+
+export const Users = () => {
+
+  const [activeColumn, setActiveColumn] = useState<ParamsType>({
+    sortBy: null,
+    sortDirection: 'asc'
+  })
+
+  const users = useAppSelector(state => state.app.users)
+
+  const dispatch = useAppDispatch()
+
+  useEffect(() => {
+    dispatch(activeColumn.sortBy ? getUsersTC(activeColumn) : getUsersTC())
+  }, [activeColumn])
+
+  /*const sortHandler = (sortBy: string) => {
+    // ❗❗❗ XXX ❗❗❗
+    setActiveColumn({
+      sortBy,
+      sortDirection:
+         activeColumn.sortBy === sortBy && activeColumn.sortDirection === 'asc'
+            ? 'desc'
+            : 'asc'
+    });
+  };*/
+
+/*
+  const sortHandler = (sortBy: string) => {
+    setActiveColumn({
+      sortBy,
+      sortDirection: activeColumn.sortDirection === 'asc' ? 'desc' : 'asc'
+    });
+  };
+*/
+  const sortHandler = (sortBy: string) => setActiveColumn({ sortBy, sortDirection: activeColumn.sortDirection === 'asc' ? 'desc' : 'asc' });
+
+
+
   return (
      <div>
-       <h2>Для чего надо добавлять файлы в .gitignore ?</h2>
-       <ul>
-         <li>1 - Чтобы git удалял их историю, храня только последнюю версию</li>
-         <li>2 - Чтобы git при работе с этими файлам уведомлял при их изменении</li>
-         <li>3 - Чтобы git не следил за изменениями в данных файлах</li>
-         <li>4 - Файл .gitignore не несет никакой смысловой нагрузки, т.к. все файлы с которыми мы работаем должны
-           отслеживаться. Соответственно никакие файлы в .gitignore добавлять не нужно
-         </li>
-         <li>5 - Нет правильного ответа</li>
-       </ul>
+       <h1>👪 Список пользователей</h1>
+       <table style={table}>
+         <thead>
+         <tr>
+           <th style={th} onClick={() => sortHandler('name')}>
+             Name
+             {activeColumn?.sortBy === 'name' && (activeColumn.sortDirection === 'asc' ? <span> &#8593;</span> :
+                <span> &#8595;</span>)}
+           </th>
+           <th style={th} onClick={() => sortHandler('age')}>
+             Age
+             {activeColumn?.sortBy === 'age' && (activeColumn.sortDirection === 'asc' ? <span> &#8593;</span> :
+                <span> &#8595;</span>)}
+           </th>
+         </tr>
+         </thead>
+         <tbody>
+         {
+           users.map(u => {
+             return (
+                <tr key={u.id}>
+                  <td style={td}>{u.name}</td>
+                  <td style={td}>{u.age}</td>
+                </tr>
+             )
+           })
+         }
+         </tbody>
+       </table>
      </div>
   )
 }
 
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
-root.render(<App/>);
+root.render(
+   <Provider store={store}>
+     <Users/>
+   </Provider>
+);
 
 // 📜 Описание:
-// Для чего надо добавлять файлы в .gitignore ?
-// Может быть несколько вариантов ответа (ответ дайте через пробел).
-// ❗ Ответ будет засчитан как верный, только при полном правильном совпадении.
-// Если указали правильно один вариант (1),
-// а нужно было указать два варианта (1 и 2), то ответ в данном случае будет засчитан как неправильный
+// Перед вами таблица с пользователями.
+// Ваша задача вместо XXX написать код для сортировки пользователей по имени и возрасту.
+// Т.е. при нажатии на name либо age пользователи должны сортироваться в таблице.
+// При повторном нажатии на этот же столбец сортировка должна происходить в обратном порядке
+// ❗ сортировка пользователей происходит на сервере, т.е. sort использовать не нужно
 
-// 🖥 Пример ответа: 1
-
-//ответила 1 3 - это неверно, ответ не засчитан
+// 🖥 Пример ответа: sort(a, b)
