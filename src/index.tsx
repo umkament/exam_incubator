@@ -1,64 +1,83 @@
-import axios from 'axios'
-import React, { useEffect, useState } from 'react'
-import ReactDOM from 'react-dom/client'
+import ReactDOM from 'react-dom/client';
+import React, { useEffect } from 'react';
+import { applyMiddleware, combineReducers, legacy_createStore as createStore } from 'redux'
+import thunk, { ThunkAction, ThunkDispatch } from 'redux-thunk'
+import { Provider, TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux'
 
-type UserType = {
-  id: string;
-  name: string;
-  age: number;
+
+// Reducer
+const initState = {find: '', words: [] as string[]}
+type InitStateType = typeof initState
+
+const appReducer = (state: InitStateType = initState, action: ActionsType): InitStateType => {
+  switch (action.type) {
+    case 'SET_FIND':
+      return {...state, find: action.find}
+    case 'SET_WORDS':
+      return {...state, words: action.words}
+    default:
+      return state
+  }
 }
 
-// API
-const instance = axios.create({baseURL: 'https://exams-frontend.kimitsu.it-incubator.ru/api/'})
+// Store
+const rootReducer = combineReducers({app: appReducer})
 
-const api = {
-  getUsers() {
-    //return instance.get('users?pageSize=3&pageNumber=2')
-    return instance.get('users', { params: { pageSize: 3, pageNumber: 2 } })
+const store = createStore(rootReducer, applyMiddleware(thunk))
+type RootState = ReturnType<typeof store.getState>
+type AppDispatch = ThunkDispatch<RootState, unknown, ActionsType>
+type AppThunk<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, ActionsType>
+const useAppDispatch = () => useDispatch<AppDispatch>()
+const useAppSelector: TypedUseSelectorHook<RootState> = useSelector
 
-  },
-}
+const setFind = (find: string) => ({type: 'SET_FIND', find} as const)
+const setWords = (words: string[]) => ({type: 'SET_WORDS', words} as const)
+type ActionsType = ReturnType<typeof setFind> | ReturnType<typeof setWords>
 
-// App
+
+// Components
+const defWords = ['a', 'ab', 'abc', 'b', 'bc', 'c', 'd', 'ac', 'bcd', 'cd', 'abcd', 'bd']
+
 export const App = () => {
+  const find = useAppSelector(state => state.app.find)
+  const words = useAppSelector(state => state.app.words)
 
-  const [users, setUsers] = useState<UserType[]>([])
+  const dispatch = useAppDispatch()
 
   useEffect(() => {
-    api.getUsers()
-       .then((res) => {
-         setUsers(res.data.items)
-       })
+    dispatch(setWords(defWords))
   }, [])
 
+  const mapped = words
+     .filter((w: string) => new RegExp(find, 'gi').test(w))
+     .map((w: string, i: number) => <div key={i}>{w}</div>)
+
+  const onChangeHandler = (value: string) => {
+    console.log(value)
+  }
 
   return (
-     <>
-       <h1>👪 Список пользователей</h1>
-       {
-         users.map(u => {
-           return <div style={{display: 'flex', gap: '10px'}} key={u.id}>
-             <p><b>name</b>: {u.name}</p>
-             <p><b>age</b>: {u.age}</p>
-           </div>
-         })
-       }
-     </>
+     <div>
+       <input
+          value={find}
+          onChange={e => onChangeHandler(e.target.value)}
+       />
+       {mapped}
+     </div>
   )
 }
 
-
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
-root.render(<App/>)
+root.render(
+   <Provider store={store}>
+     <App/>
+   </Provider>
+);
 
 // 📜 Описание:
-// На странице отображен список юзеров из 3-человек.
-// Подгрузились именно эти пользователи не случайно, а из-за query параметров указанных в запросе.
-// Ваша задача переписать строку с запросом таким образом, чтобы получить аналогичный результат (все тех же юзеров),
-// при этом запрещено в ответе использовать символы вопроса и амперсанда.
-// В качестве ответа укажите полностью исправленную строку коду (переносы разрешены)
-
-
-// 🖥 Пример ответа: return instance.get('users=pageSize=3=pageNumber=2')
-
-// ответ  return instance.get('users', { params: { pageSize: 3, pageNumber: 2 } }) - засчитан
+// На экране отображен массив слов.
+// Ваша задача починить фильтрацию:
+// вводите символы в input и сразу видите как фильтруются данные.
+// В качестве ответа укажите исправленную версию строки.
+//
+// 🖥 Пример ответа: dispatch(setFind(defWords))
