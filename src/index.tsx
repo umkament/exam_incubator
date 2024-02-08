@@ -36,25 +36,36 @@ type UsersResponseType = {
   totalCount: number;
 };
 
+type ParamsType = {
+  sortBy: string | null;
+  sortDirection: "asc" | "desc" | null;
+};
+
 // API
 const instance = axios.create({ baseURL: "https://exams-frontend.kimitsu.it-incubator.ru/api/" });
 
 const api = {
-  getUsers() {
-    return instance.get<UsersResponseType>("users");
+  getUsers(params?: ParamsType) {
+    return instance.get<UsersResponseType>("users", { params });
   },
 };
 
 // Reducer
 const initState = {
   users: [] as UserType[],
+  params: {
+    sortBy: null,
+    sortDirection: "asc",
+  } as ParamsType,
 };
 type InitStateType = typeof initState;
 
 const appReducer = (state: InitStateType = initState, action: ActionsType): InitStateType => {
   switch (action.type) {
-    case "SET-USERS":
+    case "SET_USERS":
       return { ...state, users: action.users };
+    case "SET_PARAMS":
+      return { ...state, params: { ...state.params, ...action.payload } };
     default:
       return state;
   }
@@ -70,23 +81,32 @@ type AppThunk<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, A
 const useAppDispatch = () => useDispatch<AppDispatch>();
 const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 
-const setUsersAC = (users: UserType[]) => ({ type: "SET-USERS", users });
-type ActionsType = ReturnType<typeof setUsersAC>;
+const setUsersAC = (users: UserType[]) => ({ type: "SET_USERS", users }) as const;
+const setParamsAC = (payload: ParamsType) => ({ type: "SET_PARAMS", payload }) as const;
+type ActionsType = ReturnType<typeof setUsersAC> | ReturnType<typeof setParamsAC>;
 
 // Thunk
 const getUsersTC = (): AppThunk => (dispatch, getState) => {
-  api.getUsers().then((res) => dispatch(setUsersAC(res.data.items)));
+  const params = getState().app.params;
+  api
+     .getUsers(params.sortBy ? params : undefined)
+     .then((res) => dispatch(setUsersAC(res.data.items)));
 };
 
-// Components
 export const Users = () => {
   const users = useAppSelector((state) => state.app.users);
+  const sortBy = useAppSelector((state) => state.app.params.sortBy);
+  const sortDirection = useAppSelector((state) => state.app.params.sortDirection);
+  console.log(users, sortBy, sortDirection);
 
   const dispatch = useAppDispatch();
 
-  useEffect(() => {
-    dispatch(getUsersTC());
-  }, []);
+  // ❗❗❗ XXX ❗❗❗
+
+  const sortHandler = (name: string) => {
+    const direction = sortDirection === "asc" ? "desc" : "asc";
+    dispatch(setParamsAC({ sortBy: name, sortDirection: direction }));
+  };
 
   return (
      <div>
@@ -94,17 +114,23 @@ export const Users = () => {
        <table style={table}>
          <thead>
          <tr>
-           <th style={th}> Name</th>
-           <th style={th}> Age</th>
+           <th style={th} onClick={() => sortHandler("name")}>
+             Name
+           </th>
+           <th style={th} onClick={() => sortHandler("age")}>
+             Age
+           </th>
          </tr>
          </thead>
          <tbody>
-         {users.map((u) => (
-            <tr key={u.id}>
-              <td style={td}>{u.name}</td>
-              <td style={td}>{u.age}</td>
-            </tr>
-         ))}
+         {users.map((u) => {
+           return (
+              <tr key={u.id}>
+                <td style={td}>{u.name}</td>
+                <td style={td}>{u.age}</td>
+              </tr>
+           );
+         })}
          </tbody>
        </table>
      </div>
@@ -119,13 +145,10 @@ root.render(
 );
 
 // 📜 Описание:
-// Перед вами пустая таблица. Пользователи не подгрузились, т.к. в коде допущена ошибка
-// Ваша задача найти багу, чтобы таблица с пользователями подгрузилась.
-// В качестве укажите исправленную строку кода
-// ❗ Есть несколько вариантов решения данной задачи, в ответах учтены различные варианты
+// Перед вами таблица с пользователями. Но данные не подгружаются
+// Что нужно написать вместо XXX, чтобы:
+// 1) Пользователи подгрузились
+// 2) Чтобы работала сортировка по имени и возрасту
+// 3) Направление сортировки тоже должно работать (проверить можно нажав на одно и тоже поле 2 раза)
 
-// 🖥 Пример ответа: {users.map(u)=> таблица отрисуйся ВЖУХ ВЖУХ}
-
-// Ответ в кейсе исправила на SET-USERS
-//Ошибка возникает из-за неправильно заданного типа действия в редюсере.
-// В редюсере используется строка "SET-USERS", а в экшене задается "SET_USERS".
+// 🖥 Пример ответа: console.log(users, sortBy, sortDirection)
