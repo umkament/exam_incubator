@@ -22,7 +22,8 @@ const appReducer = (state: InitStateType = initState, action: ActionsType): Init
       return {
         ...state,
         animals: state.animals.map((animal) => {
-          return true ? { ...animal } : animal;
+          return animal.name === action.name ? {...animal, likes: animal.likes + 1} : animal
+          //return true ? { ...animal } : animal;
         }),
       };
   }
