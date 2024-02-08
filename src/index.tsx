@@ -1,29 +1,110 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client';
+import ReactDOM from "react-dom/client";
+import { ThunkAction, ThunkDispatch } from "redux-thunk";
+import { Provider, TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
+import React, { useState } from "react";
+import { configureStore, combineReducers } from "@reduxjs/toolkit";
 
-export const App = () => {
+// Styles
+const modal: React.CSSProperties = {
+  position: "fixed",
+  zIndex: 1,
+  left: 0,
+  top: 0,
+  width: "100%",
+  height: "100%",
+  overflow: "auto",
+  backgroundColor: "rgba(23,26,38,0.26)",
+};
+
+const modalContent: React.CSSProperties = {
+  backgroundColor: "#fefefe",
+  margin: "15% auto",
+  padding: "20px",
+  border: "1px solid #888",
+  width: "80%",
+};
+
+// Reducer
+const initState = { goodThings: [] as any[] };
+type InitStateType = typeof initState;
+
+const appReducer = (state: InitStateType = initState, action: ActionsType): InitStateType => {
+  switch (action.type) {
+    case "LIKE":
+      return {
+        ...state,
+        goodThings: [action.thing, ...state.goodThings],
+      };
+  }
+  return state;
+};
+
+// Store
+const rootReducer = combineReducers({ app: appReducer });
+
+const store = configureStore({ reducer: rootReducer });
+type RootState = ReturnType<typeof store.getState>;
+type AppDispatch = ThunkDispatch<RootState, unknown, ActionsType>;
+type AppThunk<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, ActionsType>;
+const useAppDispatch = () => useDispatch<AppDispatch>();
+const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
+
+const addThing = (thing: any) => ({ type: "LIKE", thing }) as const;
+type ActionsType = ReturnType<typeof addThing>;
+
+const Modal = (props: any) => {
   return (
-     <div>
-       <h2>Чем отличается master от origin master ?</h2>
-       <ul>
-         <li>1 - Это просто 2 ветки с разными названиями. Их ничего не связывает</li>
-         <li>2 - master принадлежит локальному репозиторию, origin master - удаленному</li>
-         <li>3 - Это 2 названия одной и той же ветки. Приставка origin не несет никакого смысла.</li>
-         <li>4 - Ветки origin master не существует</li>
-         <li>5 - Нет правильного ответа</li>
-       </ul>
+     <div style={modalContent}>
+       modal:
+       <input value={props.value} onChange={(e) => props.setValue(e.target.value)} />
+       <button onClick={props.add}>add</button>
      </div>
-  )
-}
+  );
+};
 
-const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
-root.render(<App/>);
+// Components
+export const Animals = () => {
+  const goodThings = useAppSelector((state) => state.app.goodThings);
+  const dispatch = useAppDispatch();
+
+  const [value, setValue] = useState("");
+  const [show, setShow] = useState(false);
+
+  const mapped = goodThings.map((t: any, i: number) => <div key={i}>{t}</div>);
+
+  return (
+     <div style={modal}>
+       <button onClick={() => setShow(true)}>show modal</button>
+
+       {show && (
+          <Modal
+             value={value}
+             setValue={setValue}
+             add={() => {
+               dispatch(addThing(value));
+               setValue("");
+             }}
+          />
+       )}
+
+       {mapped}
+     </div>
+  );
+};
+
+const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
+root.render(
+   <Provider store={store}>
+     <Animals />
+   </Provider>,
+);
 
 // 📜 Описание:
-// Чем отличается master от origin master ?
-// Может быть несколько вариантов ответа (ответ дайте через пробел).
-// ❗ Ответ будет засчитан как верный, только при полном правильном совпадении.
-// Если указали правильно один вариант (1),
-// а нужно было указать два варианта (1 и 2), то ответ в данном случае будет засчитан как неправильный
+// Откройте модалку, введите любой текст и нажмите add.
+// Введенный текст отобразится снизу, но модалка останется по прежнему видимой.
 
-// 🖥 Пример ответа: 1
+// 🪛 Задача:
+// Необходимо сделать так, чтобы модалка пряталась сразу после добавления элемента
+// В качестве ответа укажите строку коду, которую необходимо добавить для реализации данной задачи
+
+// 🖥 Пример ответа: closeModal(true)
