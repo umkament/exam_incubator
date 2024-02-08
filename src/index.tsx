@@ -1,23 +1,44 @@
-import React from "react";
+import React, { useState } from "react";
 import ReactDOM from "react-dom/client";
 import { ThunkAction, ThunkDispatch } from "redux-thunk";
 import { Provider, TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
 
-// Reducer
-const initState = {
-  work: 0,
-  donate: 0,
-  balance: 0,
+// Styles
+const modal: React.CSSProperties = {
+  position: "fixed",
+  zIndex: 1,
+  left: 0,
+  top: 0,
+  width: "100%",
+  height: "100%",
+  overflow: "auto",
+  backgroundColor: "rgba(23,26,38,0.26)",
 };
+
+const modalContent: React.CSSProperties = {
+  backgroundColor: "#fefefe",
+  margin: "15% auto",
+  padding: "20px",
+  border: "1px solid #888",
+  width: "80%",
+};
+
+// Reducer
+const initState = { tasks: [] as any[] };
 type InitStateType = typeof initState;
 
 const appReducer = (state: InitStateType = initState, action: ActionsType): InitStateType => {
   switch (action.type) {
-    case "CHANGE_VALUE":
+    case "ADD_TASK":
       return {
         ...state,
-        ...action.payload,
+        tasks: [action.task, ...state.tasks],
+      };
+    case "CHANGE_TASK":
+      return {
+        ...state,
+        tasks: [action.task, ...state.tasks.filter((t: any) => t.id !== action.task.id)],
       };
     default:
       return state;
@@ -34,44 +55,71 @@ type AppThunk<ReturnType = void> = ThunkAction<ReturnType, RootState, unknown, A
 const useAppDispatch = () => useDispatch<AppDispatch>();
 const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 
-const changeValue = (payload: any) => ({ type: "CHANGE_VALUE", payload }) as const;
-type ActionsType = ReturnType<typeof changeValue>;
+const addTask = (task: any) => ({ type: "ADD_TASK", task }) as const;
+const changeTask = (task: any) => ({ type: "CHANGE_TASK", task }) as const;
+type ActionsType = ReturnType<typeof addTask> | ReturnType<typeof changeTask>;
 
 // Components
-export const Income = () => {
-  const work = useAppSelector((state) => state.app.work);
-  const donate = useAppSelector((state) => state.app.donate);
-  const balance = useAppSelector((state) => state.app.balance);
+const Modal = (props: any) => {
+  const [value, setValue] = useState(props.task?.name || "");
 
-  const dispatch = useAppDispatch();
+  return (
+     <div style={modalContent}>
+       modal:
+       <input value={value} onChange={(e) => setValue(e.target.value)} />
+       <button onClick={() => props.callback(value)}>{props.title}</button>
+     </div>
+  );
+};
+
+const Task = (props: any) => {
+  const [show, setShow] = useState(false);
 
   return (
      <div>
-       <div>
-         work:{" "}
-         <input
-            value={work}
-            type={"number"}
-            onChange={(e) => dispatch(changeValue({ work: +e.target.value }))}
-         />
-       </div>
-       <div>
-         donate:{" "}
-         <input
-            value={donate}
-            type={"number"}
-            onChange={(e) => dispatch(changeValue({ donate: +e.target.value }))}
-         />
-       </div>
+       {props.task.name}
+       <button onClick={() => setShow(true)}>change</button>
+       {show && (
+          <Modal
+             callback={(value: string) => {
+               props.change(value);
+               setShow(false);
+             }}
+             title={"change"}
+          />
+       )}
+     </div>
+  );
+};
 
-       <h1>💵 balance: {balance}</h1>
-       <button
-          onClick={() => {
-            dispatch(changeValue({ balance: work + donate }))
-          }}
-       >
-         calculate balance
-       </button>
+export const Todolist = () => {
+  const tasks = useAppSelector((state) => state.app.tasks);
+  const dispatch = useAppDispatch();
+  const [show, setShow] = useState(false);
+
+  const getId = () => tasks.reduce((acc: number, t: any) => (acc > t.id ? acc : t.id), 0) + 1;
+
+  const mapped = tasks.map((t: any) => (
+     <Task
+        key={t.id}
+        task={t}
+        change={(value: string) => dispatch(changeTask({ id: t.id, name: value }))}
+     />
+  ));
+
+  return (
+     <div style={modal}>
+       <button onClick={() => setShow(true)}>open modal</button>
+       {show && (
+          <Modal
+             callback={(value: string) => {
+               dispatch(addTask({ id: getId(), name: value }));
+               setShow(false);
+             }}
+             title={"add"}
+          />
+       )}
+       {mapped}
      </div>
   );
 };
@@ -79,11 +127,17 @@ export const Income = () => {
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 root.render(
    <Provider store={store}>
-     <Income />
+     <Todolist />
    </Provider>,
 );
 
-// 📜 Описание:
-// Что нужно написать вместо XXX, чтобы вывелась сумма дохода в строке баланса
+// 📜Описание:
+// Откройте модалку и добавьте какой-нибудь текст.
+// Теперь попробуйте изменить этот текст.
+// При изменении существующей таски в инпуте не отображается старые данные.
+// Ваша задача починить это поведение.
 //
-// 🖥 Пример ответа: console.log(work + donate)
+// В качестве ответа укажите строку кода, которую нужно изменить или добавить,
+// чтобы реализовать данную задачу
+//
+// 🖥 Пример ответа: defaultValue={value}
