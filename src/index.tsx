@@ -81,6 +81,7 @@ const Task = (props: any) => {
        <button onClick={() => setShow(true)}>change</button>
        {show && (
           <Modal
+             task={props.task}
              callback={(value: string) => {
                props.change(value);
                setShow(false);
@@ -141,3 +142,5 @@ root.render(
 // чтобы реализовать данную задачу
 //
 // 🖥 Пример ответа: defaultValue={value}
+
+//ответ  task={props.task} добавлен в компонент <Modal/>
