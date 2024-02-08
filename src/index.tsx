@@ -101,7 +101,7 @@ export const Users = () => {
 
   const dispatch = useAppDispatch();
 
-  // ❗❗❗ XXX ❗❗❗
+  useEffect(() => {dispatch(getUsersTC())}, [dispatch, sortBy, sortDirection]);
 
   const sortHandler = (name: string) => {
     const direction = sortDirection === "asc" ? "desc" : "asc";
