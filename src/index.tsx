@@ -67,7 +67,7 @@ export const Income = () => {
        <h1>💵 balance: {balance}</h1>
        <button
           onClick={() => {
-            // ❗❗❗ XXX ❗❗❗
+            dispatch(changeValue({ balance: work + donate }))
           }}
        >
          calculate balance
